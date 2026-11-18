@@ -1,0 +1,196 @@
+@startuml architecture
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 15
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam nodesep 45
+skinparam ranksep 55
+skinparam dpi 170
+hide empty members
+top to bottom direction
+title Event Stream Analyzer - UML class model / architecture view
+
+together {
+  class Main {
+    + {static} main(String[]) : void
+    + {static} run(String[], PrintStream, PrintStream) : int
+  }
+  class CliOptions <<record>> {
+    + file() : Path
+    + outdir() : Path
+    + {static} parse(String[]) : CliOptions
+  }
+}
+
+together {
+  class AnalyzerFactory <<composition root>> {
+    + {static} createDefault() : Analyzer
+  }
+  class Analyzer <<Strategy context>> {
+    + analyze(Path, Path) : void
+  }
+}
+
+together {
+  interface InputParser <<Strategy>> {
+    + parse(String) : Optional<Map>
+  }
+  class KeyValueParser
+  InputParser <|.. KeyValueParser
+}
+
+together {
+  class "RecordHandler<T>" as Handler <<Chain of Responsibility>> {
+    - reportName : String
+    + handle(Map) : boolean
+    + reports() : List<Report>
+  }
+  interface "RecordClassifier<T>" as Classifier {
+    + classify(Map) : Optional<T>
+  }
+}
+
+together {
+  interface "Aggregator<T>" as Aggregator <<Strategy>> {
+    + accept(T) : void
+    + snapshot() : Map
+  }
+}
+
+together {
+  interface OutputWriter <<Strategy>> {
+    + write(Path, List<Report>) : void
+  }
+  class JsonOutputWriter
+  class Report <<record>> {
+    + name() : String
+    + data() : Map
+  }
+  OutputWriter <|.. JsonOutputWriter
+  OutputWriter ..> Report : serializes
+}
+
+Main ..> CliOptions : parses arguments
+Main ..> AnalyzerFactory : requests new session
+Main ..> Analyzer : invokes
+AnalyzerFactory ..> Analyzer : creates and wires strategies
+Analyzer --> "1" InputParser : parser
+Analyzer --> "1" Handler : firstHandler
+Analyzer --> "1" OutputWriter : writer
+Handler --> "0..1" Handler : next
+Handler --> "1" Classifier : validates
+Handler --> "1" Aggregator : accumulates
+Handler ..> Report : creates snapshot
+note bottom of Handler
+T extends EventRecord.
+Default chain:
+Sensor -> Device -> Access.
+First valid match stops traversal.
+end note
+@enduml
+
+@startuml record-types
+!pragma layout smetana
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 15
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam nodesep 35
+skinparam ranksep 45
+skinparam dpi 170
+hide empty members
+left to right direction
+title Event Stream Analyzer - UML class model / concrete type view
+
+interface "RecordClassifier<T>" as Classifier
+interface EventRecord
+interface "Aggregator<T>" as Aggregator <<Strategy>>
+
+together {
+  class SensorClassifier
+  class SensorReading <<record>> {
+    + sensor() : String
+    + reading() : BigDecimal
+  }
+  class SensorAggregator {
+    - readings : Map<String,List<BigDecimal>>
+  }
+  SensorClassifier ..> SensorReading : creates
+  SensorAggregator ..> SensorReading : consumes
+}
+
+together {
+  class DeviceClassifier
+  class DeviceEvent <<record>> {
+    + device() : String
+    + severity() : Severity
+  }
+  class DeviceAggregator {
+    - severityCounts : EnumMap
+    - deviceCounts : Map
+  }
+  enum Severity {
+    CRITICAL
+    ERROR
+    WARN
+    INFO
+  }
+  DeviceClassifier ..> DeviceEvent : creates
+  DeviceAggregator ..> DeviceEvent : consumes
+  DeviceEvent --> Severity
+}
+
+together {
+  class AccessClassifier
+  class AccessRecord <<record>> {
+    + user() : String
+    + door() : String
+    + result() : AccessResult
+    + durationMs() : BigInteger
+  }
+  class AccessAggregator {
+    - doors : Map<String,DoorStatistics>
+  }
+  class "AccessAggregator.DoorStatistics" as DoorStatistics <<private>> {
+    - durations : List<BigInteger>
+    - results : EnumMap
+    - denialsByUser : Map
+  }
+  enum AccessResult {
+    GRANTED
+    DENIED
+  }
+  AccessClassifier ..> AccessRecord : creates
+  AccessAggregator ..> AccessRecord : consumes
+  AccessAggregator *-- "0..*" DoorStatistics
+  AccessRecord --> AccessResult
+}
+
+class FieldValues <<validation utility>> {
+  ~ {static} hasNonBlank(Map, String...) : boolean
+}
+Classifier <|.. SensorClassifier
+Classifier <|.. DeviceClassifier
+Classifier <|.. AccessClassifier
+EventRecord <|.. SensorReading
+EventRecord <|.. DeviceEvent
+EventRecord <|.. AccessRecord
+Aggregator <|.. SensorAggregator
+Aggregator <|.. DeviceAggregator
+Aggregator <|.. AccessAggregator
+SensorClassifier ..> FieldValues
+DeviceClassifier ..> FieldValues
+AccessClassifier ..> FieldValues
+note bottom of Aggregator
+Concrete aggregators implement
+accept(T) and snapshot().
+Classifier and aggregator pairs are
+held by RecordHandler<T> (view 1).
+end note
+@enduml
