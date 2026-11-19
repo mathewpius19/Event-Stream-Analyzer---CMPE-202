@@ -4,12 +4,6 @@ Java 17 command-line analysis of mixed IoT / smart-building event records.
 The application reads a UTF-8 text file, classifies each valid line, and writes
 `sensors.json`, `devices.json`, and `access.json`.
 
-**Course:** CMPE-202
-
-**Individual repository owner:** mathewolickal ([mathewpius19](https://github.com/mathewpius19))
-
-**Repository:** [Event-Stream-Analyzer---CMPE-202](https://github.com/mathewpius19/Event-Stream-Analyzer---CMPE-202)
-
 ## Build and run
 
 Requirements: a **JDK 17 or later** and **Maven 3.9+**. The first build needs
@@ -284,27 +278,6 @@ intermediate arithmetic is finite precision, and extreme numeric magnitudes,
 scales, or input sizes remain constrained by Java memory/BigDecimal limits.
 File I/O failures stop the run; output files are written individually, so an I/O
 failure partway through output can leave some reports already replaced.
-
-## Regenerating the design PDF
-
-The checked-in PDF and diagrams can be read without installing authoring tools.
-For edits, install ReportLab in a Python environment and download PlantUML
-1.2025.10 from its official distribution or Maven Central. From the repository root:
-
-```sh
-java -jar /path/to/plantuml.jar -tpng docs/class-diagram.puml
-java -jar /path/to/plantuml.jar -tsvg docs/class-diagram.puml
-python3 scripts/build_design.py
-```
-
-The PlantUML source selects the Java-based Smetana layout engine, so Graphviz is
-not required. The PDF generator reads `docs/design.md` and the two PNG diagrams.
-
-## Submission
-
-The assignment requests submission through Canvas with a GitHub repository link.
-The repository includes the required design PDF under `docs/`; Canvas submission
-is a separate step.
 
 ## References
 
