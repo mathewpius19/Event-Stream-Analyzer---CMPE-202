@@ -46,6 +46,18 @@ class ClassificationTest {
     }
 
     @Test
+    void rejectsBlankRequiredValuesForEveryType() {
+        var parser = new edu.cmpe202.analyzer.parsing.KeyValueParser();
+        assertTrue(new SensorClassifier().classify(parser.parse("sensor= reading=1").orElseThrow()).isEmpty());
+        assertTrue(new SensorClassifier().classify(parser.parse("sensor=s reading=").orElseThrow()).isEmpty());
+        assertTrue(new DeviceClassifier().classify(parser.parse("severity=INFO device=").orElseThrow()).isEmpty());
+        assertTrue(new AccessClassifier().classify(
+                parser.parse("user= door=d result=GRANTED duration_ms=1").orElseThrow()).isEmpty());
+        assertTrue(new AccessClassifier().classify(
+                parser.parse("user=u door=\"\" result=GRANTED duration_ms=1").orElseThrow()).isEmpty());
+    }
+
+    @Test
     void acceptsAllFourSeverityLevelsExactly() {
         for (Severity severity : Severity.values()) {
             assertEquals(severity, new DeviceClassifier().classify(

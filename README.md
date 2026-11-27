@@ -89,7 +89,7 @@ These decisions make behavior reproducible and are covered by tests.
 - **Timestamp:** parsed like any other field but never validated or used.
   Lines without `ts` can still classify, consistent with ignoring that field.
 - **Duplicate keys:** reject the entire line because a repeated field is
-  ambiguous. Empty quoted extra values are allowed; blank required values are not.
+  ambiguous. Empty extra values (`note=` or `note=""`) are allowed; blank required values are not.
 - **Whitespace:** leading/trailing whitespace and repeated spaces or tabs are
   accepted. Enumerated values remain case-sensitive.
 - **Integer formatting:** follow the written rule over conflicting illustrative

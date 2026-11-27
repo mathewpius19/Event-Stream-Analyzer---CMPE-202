@@ -35,12 +35,10 @@ public final class KeyValueParser implements InputParser {
                 return Optional.empty();
             }
             String key = line.substring(keyStart, cursor++);
-            if (cursor == line.length()) {
-                return Optional.empty();
-            }
 
+            // An empty unquoted value (key=) is well formed; classifiers reject blank required values.
             String value;
-            if (line.charAt(cursor) == '"') {
+            if (cursor < line.length() && line.charAt(cursor) == '"') {
                 int endQuote = line.indexOf('"', cursor + 1);
                 if (endQuote < 0) {
                     return Optional.empty();
@@ -57,9 +55,6 @@ public final class KeyValueParser implements InputParser {
                         return Optional.empty();
                     }
                     cursor++;
-                }
-                if (cursor == valueStart) {
-                    return Optional.empty();
                 }
                 value = line.substring(valueStart, cursor);
             }

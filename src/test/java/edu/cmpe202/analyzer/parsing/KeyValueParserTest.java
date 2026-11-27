@@ -30,11 +30,19 @@ class KeyValueParserTest {
     @ValueSource(strings = {
         "ts=t sensor=s reading=2 garbage", "ts=t msg=\"unterminated",
         "ts=t msg=\"ok\"trailing", "=missing-key", "sensor =s reading=1",
-        "sensor= reading=1", "sensor=s reading=", "sensor=s reading=2\"x",
+        "sensor=s reading=2\"x",
         "ts=t ###CORRUPTED LINE### !!!", "ts=t sensor=s reading=1 msg=\"bad\"quote\""
     })
     void rejectsTheWholeMalformedLine(String line) {
         assertTrue(parser.parse(line).isEmpty());
+    }
+
+    @Test
+    void acceptsEmptyUnquotedValues() {
+        var fields = parser.parse("ts=t sensor=s reading=2 note= tag=").orElseThrow();
+        assertEquals("", fields.get("note"));
+        assertEquals("", fields.get("tag"));
+        assertEquals("2", fields.get("reading"));
     }
 
     @Test
